@@ -8,93 +8,44 @@
 # § Saída: dois arquivos (Um com a chave de seção criptografada e outro do arquivo
 # criptografado assinado).
 
-
 from Crypto.Cipher import AES, DES, ARC4
-from Crypto.PublicKey import RSA
-from Crypto.Cipher import PKCS1_OAEP
 from Crypto.Random import get_random_bytes
 from Crypto.Util.Padding import pad, unpad
 
-print('\n\nCHAVE SIMÉTRICA AES\n\n')
-# Chave AES de 128 bits (16 bytes)
-key = get_random_bytes(16)
+def makeDigitalEnvelope(plainText: bytes, recipientPublicKey: bytes, senderPrivateKey: bytes, symmetricAlgorithm: str, symmetricKeySize: int):
+    """
+    plainText -> The plain text to be encrypted.
+    recipientPublicKey -> The recipient's public key to encrypt the symmetric key.
+    privateKeyFile -> The sender's private key to sign the encrypted message.
+    symmetricAlgorithm -> The symmetric algorithm to be used.
+    symmetricKeySize -> The symmetric key size (for AES and RC4).
+    """
 
-print("\n\nChave:", key, "\n\n\n")
+    # Generate a random symmetric key and encrypt plainText with it:
+    match symmetricAlgorithm:
+        case "DES":
+            key = get_random_bytes(8) # 64 bits key with 56 bits of entropy
 
-# Mensagem a ser criptografada
-message = b"Minha mensagem secreta"
+            cipher = DES.new(key, DES.MODE_CBC) # Create a DES cipher object
 
-# Criando um objeto AES com o modo CBC
-cipher_aes = AES.new(key, AES.MODE_CBC)
+            cipherText = cipher.encrypt(pad(plainText, DES.block_size)) # Encrypt the plain text
 
-# Criptografando a mensagem
-cipher_text = cipher_aes.encrypt(pad(message, AES.block_size))
-print("Texto criptografado:", cipher_text, "\n\n\n")
+        case "AES":
+            key = get_random_bytes(symmetricKeySize) # 128, 192 or 256 bits key
 
-# Descriptografando a mensagem
-decipher_aes = AES.new(key, AES.MODE_CBC, cipher_aes.iv)
-plain_text = unpad(decipher_aes.decrypt(cipher_text), AES.block_size)
-print("Texto original:", plain_text)
+            cipher = AES.new(key, AES.MODE_CBC)
 
-print('\n\nCHAVE SIMÉTRICA DES\n\n')
+            cipherText = cipher.encrypt(pad(plainText, AES.block_size))
 
-####################################
+        case "RC4":
+            key = get_random_bytes(symmetricKeySize) # 40 to 2048 bits key
+            
+            cipher = ARC4.new(key)
 
-# Chave DES de 8 bytes (56 bits)
-key = get_random_bytes(8)
-print("Chave DES:", key)
+            cipherText = cipher.encrypt(plainText)
 
-# Mensagem a ser criptografada (múltiplo de 8 bytes para DES)
-message = b"Minha mensagem"
-
-# Criando um objeto DES com o modo CBC
-cipher_des = DES.new(key, DES.MODE_CBC)
-
-# Criptografando a mensagem
-cipher_text = cipher_des.encrypt(pad(message, DES.block_size))
-print("Texto criptografado com DES:", cipher_text)
-
-# Descriptografando a mensagem
-decipher_des = DES.new(key, DES.MODE_CBC, cipher_des.iv)
-plain_text = unpad(decipher_des.decrypt(cipher_text), DES.block_size)
-print("Texto original com DES:", plain_text)
-
-#####################################
-
-print('\n\nCHAVE SIMÉTRICA RC4\n\n')
-
-# Chave para RC4
-key_rc4 = b"Chave secreta"
-print("Chave RC4:", key_rc4)
-
-# Mensagem a ser criptografada
-message_rc4 = b"Minha mensagem secreta para RC4"
-
-# Criando um objeto RC4
-cipher_rc4 = ARC4.new(key_rc4)
-
-# Criptografando a mensagem
-cipher_text_rc4 = cipher_rc4.encrypt(message_rc4)
-print("Texto criptografado com RC4:", cipher_text_rc4)
-
-# Descriptografando a mensagem
-decipher_rc4 = ARC4.new(key_rc4)
-plain_text_rc4 = decipher_rc4.decrypt(cipher_text_rc4)
-print("Texto original com RC4:", plain_text_rc4)
-
-###################################
-
-print('\n\nCHAVE ASSIMÉTRICA RSA\n\n')
-
-# Gerando um par de chaves RSA
-key = RSA.generate(2048)
-print("Chave pública:", key.publickey().export_key())
-print("Chave privada:", key.export_key())
-# Criando objetos de criptografia e descriptografia
-cipher = PKCS1_OAEP.new(key)
-message = b"Minha mensagem secreta"
-cipher_text = cipher.encrypt(message)
-print(cipher_text)
-
-plain_text = cipher.decrypt(cipher_text)
-print(plain_text)
+        case _:
+            raise ValueError("Invalid symmetric algorithm.")
+        
+    
+        
