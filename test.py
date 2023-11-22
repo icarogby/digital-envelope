@@ -90,16 +90,28 @@ print('\n\nCHAVE ASSIMÉTRICA RSA\n\n')
 
 # Gerando um par de chaves RSA
 key = RSA.generate(2048)
-print("Chave pública:", key.publickey().export_key())
-print("Chave privada:", key.export_key())
-# Criando objetos de criptografia e descriptografia
-cipher = PKCS1_OAEP.new(key)
-message = b"Minha mensagem secreta"
-cipher_text = cipher.encrypt(message)
-print(cipher_text)
 
-plain_text = cipher.decrypt(cipher_text)
-print(plain_text)
+chave_publica = key.publickey().export_key()
+chave_privada = key.export_key()
+
+print(f"Chave pública: {chave_publica}\n\n")
+print(f"Chave privada: {chave_privada}\n\n")
+
+# Criando objetos de criptografia e descriptografia
+cipher = PKCS1_OAEP.new(chave_publica)
+decipher = PKCS1_OAEP.new(chave_privada)
+
+message = b"opa"
+
+cipher_text = cipher.encrypt(message)
+
+print('\n\n', cipher_text, '\n\n')
+
+plain_text = decipher.decrypt(cipher_text)
+
+print('\n\n', plain_text, '\n\n')
+
+####################################
 
 # Mensagem a ser hashada
 message = b"Minha mensagem secreta para o hash"

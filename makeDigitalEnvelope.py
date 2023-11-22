@@ -8,9 +8,10 @@
 # § Saída: dois arquivos (Um com a chave de seção criptografada e outro do arquivo
 # criptografado assinado).
 
-from Crypto.Cipher import AES, DES, ARC4
+from Crypto.Cipher import AES, DES, ARC4, PKCS1_OAEP
 from Crypto.Random import get_random_bytes
 from Crypto.Util.Padding import pad, unpad
+from Crypto.Hash import SHA256
 
 def makeDigitalEnvelope(plainText: bytes, recipientPublicKey: bytes, senderPrivateKey: bytes, symmetricAlgorithm: str, symmetricKeySize: int):
     """
@@ -47,5 +48,19 @@ def makeDigitalEnvelope(plainText: bytes, recipientPublicKey: bytes, senderPriva
         case _:
             raise ValueError("Invalid symmetric algorithm.")
         
-    
+    # Sign the cipher text with the sender's private key:
+
+    # # Make a hash of the cipher text
+    hashObject = SHA256.new() # Create a SHA-256 hash object
+
+    hashObject.update(cipherText) # Update the hash object with the cipher text
+
+    hashResult = hashObject.digest() # Get the hash result
+
+    # # Sign the hash result with the sender's private key
+    cipher = PKCS1_OAEP.new(senderPrivateKey) # Create a PKCS1_OAEP cipher object
+
+    signature = cipher.encrypt(hashResult) # Encrypt the hash result with the sender's private key
+
+
         
