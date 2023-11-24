@@ -8,12 +8,12 @@
 # § Saída: dois arquivos (Um com a chave de seção criptografada e outro do arquivo
 # criptografado assinado).
 
-from Crypto.Cipher import AES, DES, ARC4, PKCS1_OAEP
+import rsa
+from Crypto.Cipher import AES, DES, ARC4
 from Crypto.Random import get_random_bytes
 from Crypto.Util.Padding import pad, unpad
-from Crypto.Hash import SHA256
 
-def makeDigitalEnvelope(plainText: bytes, recipientPublicKey: bytes, senderPrivateKey: bytes, symmetricAlgorithm: str, symmetricKeySize: int):
+def makeDigitalEnvelope(plainText: bytes, recipientPublicKey: bytes, senderPrivateKey, symmetricAlgorithm: str, symmetricKeySize: int):
     """
     plainText -> The plain text to be encrypted.
     recipientPublicKey -> The recipient's public key to encrypt the symmetric key.
@@ -49,18 +49,15 @@ def makeDigitalEnvelope(plainText: bytes, recipientPublicKey: bytes, senderPriva
             raise ValueError("Invalid symmetric algorithm.")
         
     # Sign the cipher text with the sender's private key:
+    signature = rsa.sign(cipherText, senderPrivateKey, 'SHA-256')
 
-    # # Make a hash of the cipher text
-    hashObject = SHA256.new() # Create a SHA-256 hash object
+    # Encrypt the symmetric key with the recipient's public key:
+    encryptedKey = rsa.encrypt(key, recipientPublicKey)
 
-    hashObject.update(cipherText) # Update the hash object with the cipher text
+    # save the encrypted session key to a file
+    with open('encryptedKey.bin', 'wb') as outputFile:
+        outputFile.write(encryptedKey)
 
-    hashResult = hashObject.digest() # Get the hash result
-
-    # # Sign the hash result with the sender's private key
-    cipher = PKCS1_OAEP.new(senderPrivateKey) # Create a PKCS1_OAEP cipher object
-
-    signature = cipher.encrypt(hashResult) # Encrypt the hash result with the sender's private key
-
-
-        
+    # save the encrypted signed message to a file
+    with open('encryptedSignedMessage.bin', 'wb') as outputFile:
+        outputFile.write(signature + cipherText)
