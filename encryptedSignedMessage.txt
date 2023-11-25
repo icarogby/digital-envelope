@@ -9,3 +9,7 @@
 3f27afba01bbcc87dfa571f94ccbfa66
 
 --- END CIPHER TEXT ---
+
+tamanho do bloco
+
+algoritmo simetrico usado
