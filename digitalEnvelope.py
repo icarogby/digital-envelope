@@ -19,7 +19,8 @@ import rsa
 from Crypto.Cipher import AES, DES, ARC4
 from Crypto.Random import get_random_bytes
 from Crypto.Util.Padding import pad, unpad
-
+import binascii
+# todo mudar para bit e n bytes no tamanho da chave
 def makeDigitalEnvelope(plainText: bytes, recipientPublicKey: bytes, senderPrivateKey, symmetricAlgorithm: str, symmetricKeySize: int):
     """
     plainText -> The plain text to be encrypted.
@@ -41,7 +42,7 @@ def makeDigitalEnvelope(plainText: bytes, recipientPublicKey: bytes, senderPriva
         case "AES":
             symmetricKey = get_random_bytes(symmetricKeySize) # 128, 192 or 256 bits key
 
-            cipher = AES.new(symmetricKey, AES.MODE_CBC)
+            cipher = AES.new(symmetricKey, AES.MODE_CBC, bytes([0, 1, 2, 3, 4, 5, 6, 7,8,9,10,11,12,13,14,15])) # Create an AES cipher object (CBC mode
 
             cipherText = cipher.encrypt(pad(plainText, AES.block_size))
 
@@ -69,16 +70,6 @@ def makeDigitalEnvelope(plainText: bytes, recipientPublicKey: bytes, senderPriva
     with open('encryptedSignedMessage.txt', 'w') as outputFile:
         outputFile.write('--- BEGUIN SIGNATURE ---\n\n' + signature.hex() + '\n\n--- END SIGNATURE ---\n\n--- BEGUIN CIPHER TEXT ---\n\n' + cipherText.hex() + '\n\n--- END CIPHER TEXT ---\n')
 
-# Carregar a chave privada
-with open('chave_privada.pem', mode='rb') as chave_privada_arquivo:
-    chave_privada = rsa.PrivateKey.load_pkcs1(chave_privada_arquivo.read())
-
-# Carregar a chave pública
-with open('chave_publica.pem', mode='rb') as chave_publica_arquivo:
-    chave_publica = rsa.PublicKey.load_pkcs1(chave_publica_arquivo.read())
-
-makeDigitalEnvelope(b'Hello world!', chave_publica, chave_privada, "AES", 32)
-
 def openDigitalEnvelope(encryptedKeyFile: str, encryptedSignedMessageFile: str, recipientPrivateKey: bytes, senderPublicKey: bytes, symmetricAlgorithm: str):
     """
     encryptedKeyFile -> The encrypted symmetric key file.
@@ -97,8 +88,8 @@ def openDigitalEnvelope(encryptedKeyFile: str, encryptedSignedMessageFile: str, 
         encryptedSignedMessage = inputFile.read()
 
     # Split the encrypted signed message into signature and cipher text:
-    signature = encryptedSignedMessage.split('--- END SIGNATURE ---')[0].split('--- BEGUIN SIGNATURE ---')[1].strip()
-    cipherText = encryptedSignedMessage.split('--- END CIPHER TEXT ---')[0].split('--- BEGUIN CIPHER TEXT ---')[1].strip()
+    signature = binascii.unhexlify(encryptedSignedMessage.split('--- END SIGNATURE ---')[0].split('--- BEGUIN SIGNATURE ---')[1].strip())
+    cipherText = binascii.unhexlify(encryptedSignedMessage.split('--- END CIPHER TEXT ---')[0].split('--- BEGUIN CIPHER TEXT ---')[1].strip())
 
     # Decrypt the symmetric key with the recipient's private key:
     symmetricKey = rsa.decrypt(encryptedKey, recipientPrivateKey)
@@ -117,8 +108,8 @@ def openDigitalEnvelope(encryptedKeyFile: str, encryptedSignedMessageFile: str, 
             plainText = unpad(cipher.decrypt(cipherText), DES.block_size)
 
         case "AES":
-            cipher = AES.new(symmetricKey, AES.MODE_CBC)
-
+            cipher = AES.new(symmetricKey, AES.MODE_CBC, bytes([0, 1, 2, 3, 4, 5, 6, 7,8,9,10,11,12,13,14,15]))
+            print(cipherText)
             plainText = unpad(cipher.decrypt(cipherText), AES.block_size)
 
         case "RC4": 
