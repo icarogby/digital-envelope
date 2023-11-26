@@ -2,7 +2,7 @@ from digitalEnvelope import makeDigitalEnvelope, openDigitalEnvelope, makeKeys
 
 msg = b'Hello World!'
 
-x = 2
+x = 0
 
 if x == 0:
     # Gerando as chaves
