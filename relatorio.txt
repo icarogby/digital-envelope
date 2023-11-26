@@ -1,0 +1,5 @@
+pkcs#8 foi usado do openssl
+ñ é necessario tamanho da chave no des
+o vetor de inicialização é passado no protocolo
+o tamanho da chave do rc4 é um multiplo de 8 em bits
+usamos hash de 256 bits

@@ -1,29 +1,30 @@
-from digitalEnvelope import makeDigitalEnvelope, openDigitalEnvelope
-from Crypto.PublicKey import RSA
+from digitalEnvelope import makeDigitalEnvelope, openDigitalEnvelope, makeKeys
 
-msg = 'Hello world!'.encode('utf-8')
-
-# Carregar a chave pública
-with open('./keys/sender/public_key_sender.pem', mode='rb') as chave_publica_arquivo:
-    chave_publica_remetente = RSA.import_key(chave_publica_arquivo.read())
-
-# Carregar a chave privada
-with open('./keys/recipient/private_key_recipient.pem', mode='rb') as chave_privada_arquivo:
-    chave_privada_destinatario = RSA.import_key(chave_privada_arquivo.read())
-
-# Carregar a chave pública
-with open('./keys/recipient/public_key_recipient.pem', mode='rb') as chave_publica_arquivo:
-    chave_publica_destinatario = RSA.import_key(chave_publica_arquivo.read())
-
-# Carregar a chave privada
-with open('./keys/sender/private_key_sender.pem', mode='rb') as chave_privada_arquivo:
-    chave_privada_remetente = RSA.import_key(chave_privada_arquivo.read())
+msg = b'Hello World!'
 
 x = 2
 
-if x == 1:
-    makeDigitalEnvelope(msg, chave_publica_destinatario, chave_privada_remetente, "AES", 16)
+if x == 0:
+    # Gerando as chaves
+    chave_privada_remetente, chave_publica_remetente = makeKeys()
+    chave_privada_destinatario, chave_publica_destinatario = makeKeys()
+
+    # salvar chaves
+    with open('chave_privada_remetente.pem', 'wb') as f:
+        f.write(chave_privada_remetente)
+
+    with open('chave_publica_remetente.pem', 'wb') as f:
+        f.write(chave_publica_remetente)
+
+    with open('chave_privada_destinatario.pem', 'wb') as f:
+        f.write(chave_privada_destinatario)
+
+    with open('chave_publica_destinatario.pem', 'wb') as f:
+        f.write(chave_publica_destinatario)
+
+elif x == 1:
+    makeDigitalEnvelope(msg, 'chave_publica_destinatario.pem', 'chave_privada_remetente.pem', "AES", 128)
 
 else:
-    x = openDigitalEnvelope('encryptedKey.bin', 'encryptedSignedMessage.txt', chave_privada_destinatario, chave_publica_remetente, "AES")
+    x = openDigitalEnvelope('encryptedKey.bin', 'encryptedSignedMessage.txt', 'chave_privada_destinatario.pem', 'chave_publica_remetente.pem', "AES")
     print(x.decode('utf-8'))
