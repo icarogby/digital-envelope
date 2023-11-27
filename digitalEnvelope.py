@@ -181,7 +181,7 @@ def openDigitalEnvelope(encryptedKeyFile: str, encryptedSignedMessageFile: str, 
         # Decrypt the cipher text with the symmetric key:
         match symmetricAlgorithm:
             case "DES":
-                cipher = DES.new(symmetricKey, DES.MODE_CBC, s1)
+                cipher = DES.new(symmetricKey, DES.MODE_CBC, iv)
 
                 plainText = unpad(cipher.decrypt(cipherText), DES.block_size)
 
